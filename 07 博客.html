@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="宁波大学应用心理学专业学生个人博客:社会认知、心理测量、MATLAB/R/SPSS 数据分析与实验研究。">
+<title>xyh的博客 · 心智与行为 | 宁波大学</title>
+<style>
+/* ==========================================================================
+   0. 设计令牌（Design Tokens）
+   所有颜色集中在变量里，切换明暗主题只需改变量，其余样式自动适配。
+   ========================================================================== */
+:root {
+  --bg:          #0a0e18;
+  --bg-soft:     #111827;
+  --card:        rgba(255, 255, 255, .045);
+  --card-hover:  rgba(255, 255, 255, .075);
+  --border:      rgba(255, 255, 255, .10);
+  --text:        #e9ebf3;
+  --text-dim:    #9ba4b9;
+  --text-faint:  #6b7488;
+
+  /* 配色：靛蓝(理性/科学) → 紫(心智) → 品红(情感) */
+  --brand:       #7aa2ff;
+  --brand-2:     #a78bfa;
+  --brand-3:     #4ade9b;
+  --accent-grad: linear-gradient(120deg, #7aa2ff 0%, #a78bfa 48%, #f472b6 100%);
+  --ring:        rgba(122, 162, 255, .35);
+
+  --shadow-sm:   0 2px 10px rgba(0, 0, 0, .25);
+  --shadow-lg:   0 26px 64px -20px rgba(0, 0, 0, .68);
+
+  --radius:      18px;
+  --radius-sm:   12px;
+  --maxw:        1100px;
+  --ease:        cubic-bezier(.22, .61, .36, 1);
+
+  --font: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  --font-serif: "Songti SC", "Noto Serif SC", Georgia, "Times New Roman", serif;
+}
+
+/* 亮色主题：仅覆盖变量 */
+html[data-theme="light"] {
+  --bg:         #f5f6fb;
+  --bg-soft:    #ffffff;
+  --card:       rgba(15, 23, 42, .035);
+  --card-hover: rgba(15, 23, 42, .065);
+  --border:     rgba(15, 23, 42, .10);
+  --text:       #131a2a;
+  --text-dim:   #4d5772;
+  --text-faint: #7c86a0;
+  --shadow-lg:  0 26px 64px -24px rgba(23, 37, 84, .3);
+}
+
+/* ==========================================================================
+   1. 基础重置
+   ========================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.85;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  transition: background .45s var(--ease), color .45s var(--ease);
+}
+
+/* 背景光斑：多层径向渐变 + 模糊，营造氛围 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20% -10% auto -10%;
+  height: 92vh;
+  background:
+    radial-gradient(42rem 30rem at 16% 10%, rgba(122, 162, 255, .30), transparent 60%),
+    radial-gradient(38rem 26rem at 84% 2%,  rgba(167, 139, 250, .26), transparent 62%),
+    radial-gradient(32rem 24rem at 52% 38%, rgba(74, 222, 155, .13), transparent 66%);
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: 0;
+}
+html[data-theme="light"] body::before { opacity: .5; }
+
+/* 网格纹理：靠 mask 只在上半屏显示并渐隐 */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 80% 58% at 50% 0%, #000 8%, transparent 76%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 58% at 50% 0%, #000 8%, transparent 76%);
+  opacity: .45;
+  pointer-events: none;
+  z-index: 0;
+}
+
+img { max-width: 100%; display: block; }
+a   { color: inherit; text-decoration: none; }
+p   { margin: 0 0 1rem; }
+h1, h2, h3, h4 { line-height: 1.3; }
+strong { color: var(--text); font-weight: 650; }
+
+::selection { background: var(--brand); color: #07101f; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-faint); background-clip: content-box; }
+
+/* ==========================================================================
+   2. 布局容器
+   ========================================================================== */
+.wrap {
+  width: min(100% - 2.5rem, var(--maxw));
+  margin-inline: auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* ==========================================================================
+   3. 吸顶导航（毛玻璃）
+   ========================================================================== */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  background: color-mix(in srgb, var(--bg) 74%, transparent);
+  border-bottom: 1px solid transparent;
+  transition: border-color .3s var(--ease);
+}
+header.stuck { border-bottom-color: var(--border); }
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 68px;
+}
+
+.logo { display: flex; align-items: center; gap: .65rem; font-weight: 700; }
+.logo-mark {
+  width: 36px; height: 36px;
+  border-radius: 11px;
+  background: var(--accent-grad);
+  display: grid; place-items: center;
+  font-size: 1.15rem;
+  color: #0a1020;
+  box-shadow: 0 6px 18px -6px var(--ring);
+}
+.logo-name { display: flex; flex-direction: column; line-height: 1.22; }
+.logo-name small {
+  font-size: .65rem;
+  font-weight: 500;
+  letter-spacing: .18em;
+  color: var(--text-faint);
+}
+
+.nav-links {
+  display: flex;
+  gap: .2rem;
+  list-style: none;
+  margin: 0; padding: 0;
+  font-size: .92rem;
+}
+.nav-links a {
+  position: relative;
+  display: block;
+  padding: .45rem .78rem;
+  color: var(--text-dim);
+  border-radius: 8px;
+  transition: color .25s var(--ease), background .25s var(--ease);
+}
+/* 悬停时从左向右展开的渐变下划线（用 transform，不触发重排） */
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  left: .78rem; right: .78rem; bottom: .2rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent-grad);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .32s var(--ease);
+}
+.nav-links a:hover { color: var(--text); background: var(--card); }
+.nav-links a:hover::after { transform: scaleX(1); }
+
+.icon-btn {
+  width: 38px; height: 38px;
+  display: grid; place-items: center;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text-dim);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: transform .25s var(--ease), color .25s var(--ease), border-color .25s var(--ease);
+}
+.icon-btn:hover {
+  color: var(--text);
+  border-color: var(--brand);
+  transform: translateY(-2px) rotate(-8deg);
+}
+
+/* ==========================================================================
+   4. Hero 首屏
+   ========================================================================== */
+.hero { padding: clamp(3.4rem, 9vw, 6.5rem) 0 clamp(2.5rem, 5vw, 4rem); }
+
+.hero-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: center;
+}
+
+.tagline {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .78rem;
+  letter-spacing: .12em;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: .32rem .85rem;
+  border-radius: 99px;
+  margin-bottom: 1.2rem;
+}
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--brand-3);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  70%  { box-shadow: 0 0 0 9px rgba(74, 222, 155, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(74, 222, 155, 0); }
+}
+
+h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 5.4vw, 3.5rem);
+  letter-spacing: -.02em;
+  font-weight: 800;
+}
+.grad {
+  background: var(--accent-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.lede {
+  color: var(--text-dim);
+  font-size: 1.03rem;
+  max-width: 48ch;
+  margin-bottom: 1.9rem;
+}
+
+.actions { display: flex; flex-wrap: wrap; gap: .8rem; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .72rem 1.35rem;
+  border-radius: 99px;
+  font-size: .93rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform .28s var(--ease), box-shadow .28s var(--ease), background .28s var(--ease);
+}
+.btn-primary {
+  background: var(--accent-grad);
+  color: #08101f;
+  box-shadow: 0 12px 30px -12px var(--ring);
+}
+.btn-primary:hover { transform: translateY(-3px); box-shadow: 0 20px 44px -14px var(--ring); }
+.btn-ghost { border-color: var(--border); background: var(--card); color: var(--text); }
+.btn-ghost:hover { transform: translateY(-3px); background: var(--card-hover); }
+
+/* 头像卡：圆锥渐变描边 + 上下浮动 */
+.avatar-card {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 26px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(120% 120% at 20% 0%,   rgba(122, 162, 255, .24), transparent 55%),
+    radial-gradient(120% 120% at 90% 100%, rgba(167, 139, 250, .24), transparent 55%),
+    var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: float 7s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+.avatar-card::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(from 0deg, transparent 0 62%, var(--brand) 74%, var(--brand-2) 84%, transparent 96%);
+  animation: spin 9s linear infinite;
+  opacity: .5;
+}
+@keyframes spin { to { transform: rotate(1turn); } }
+
+.avatar-inner {
+  position: relative;
+  z-index: 1;
+  width: 84%;
+  aspect-ratio: 1;
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: .55rem;
+  padding: 1.2rem;
+  text-align: center;
+  background: color-mix(in srgb, var(--bg-soft) 90%, transparent);
+  border: 1px solid var(--border);
+}
+.avatar-psi {
+  font-family: var(--font-serif);
+  font-size: clamp(2.6rem, 7vw, 4rem);
+  line-height: 1;
+  background: var(--accent-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.avatar-inner span {
+  font-family: var(--font-mono);
+  font-size: .66rem;
+  letter-spacing: .16em;
+  color: var(--text-faint);
+}
+
+/* 数据条 */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  margin-top: clamp(2.5rem, 5vw, 3.6rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--border);
+}
+.stat { background: color-mix(in srgb, var(--bg) 80%, transparent); padding: 1.2rem 1.4rem; }
+.stat b {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 800;
+  background: var(--accent-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.stat span { font-size: .8rem; color: var(--text-faint); }
+
+/* ==========================================================================
+   5. 通用区块与标题
+   ========================================================================== */
+section { padding: clamp(2.8rem, 6.5vw, 4.6rem) 0; }
+
+.sec-head { margin-bottom: 2.1rem; }
+.sec-head h2 {
+  margin: 0 0 .35rem;
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+}
+/* 标题前的渐变竖条（伪元素生成，不用额外标签） */
+.sec-head h2::before {
+  content: "";
+  width: 5px;
+  height: 1.05em;
+  border-radius: 3px;
+  background: var(--accent-grad);
+  flex: none;
+}
+.sec-head p { margin: 0; color: var(--text-faint); font-size: .9rem; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.7rem;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform .35s var(--ease), background .35s var(--ease), border-color .35s var(--ease);
+}
+.card:hover {
+  background: var(--card-hover);
+  border-color: color-mix(in srgb, var(--brand) 42%, var(--border));
+}
+.card h3 { margin: 0 0 .85rem; font-size: 1.06rem; }
+.card p  { color: var(--text-dim); font-size: .94rem; }
+.card p:last-child { margin-bottom: 0; }
+
+/* ==========================================================================
+   6. 关于我：两栏
+   ========================================================================== */
+.about-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.42fr) minmax(0, 1fr);
+  gap: 1.4rem;
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.1rem; }
+.chip {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  padding: .3rem .7rem;
+  border-radius: 8px;
+  color: var(--text-dim);
+  background: var(--card);
+  border: 1px solid var(--border);
+  transition: all .25s var(--ease);
+}
+.chip:hover {
+  color: #08101f;
+  background: var(--accent-grad);
+  border-color: transparent;
+  transform: translateY(-2px);
+}
+
+/* 主修课程：两列小方块 */
+.courses {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .45rem;
+  margin-top: 1rem;
+  font-size: .84rem;
+}
+.courses span {
+  color: var(--text-dim);
+  padding: .35rem .6rem;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   7. 研究方向：图标卡片网格
+   ========================================================================== */
+.directions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.1rem;
+}
+
+.dir {
+  position: relative;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem 1.4rem;
+  transition: transform .38s var(--ease), border-color .38s var(--ease), background .38s var(--ease);
+}
+/* 悬停时卡片内部亮起一团光 */
+.dir::before {
+  content: "";
+  position: absolute;
+  inset: auto -30% -60% -30%;
+  height: 70%;
+  background: radial-gradient(closest-side, var(--ring), transparent 70%);
+  opacity: 0;
+  transition: opacity .45s var(--ease);
+  pointer-events: none;
+}
+.dir:hover {
+  transform: translateY(-6px);
+  border-color: color-mix(in srgb, var(--brand) 45%, var(--border));
+  background: var(--card-hover);
+}
+.dir:hover::before { opacity: 1; }
+
+.dir-icon {
+  width: 44px; height: 44px;
+  border-radius: 13px;
+  display: grid; place-items: center;
+  font-size: 1.25rem;
+  margin-bottom: .9rem;
+  background: color-mix(in srgb, var(--brand) 16%, transparent);
+  border: 1px solid var(--border);
+}
+.dir h3 { margin: 0 0 .5rem; font-size: 1.02rem; }
+.dir p  { margin: 0; font-size: .89rem; color: var(--text-dim); }
+
+/* ==========================================================================
+   8. 技能：进度条
+   ========================================================================== */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(272px, 1fr));
+  gap: 1.4rem;
+}
+
+.skill-group {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.6rem;
+  transition: border-color .35s var(--ease);
+}
+.skill-group:hover { border-color: color-mix(in srgb, var(--brand) 38%, var(--border)); }
+
+.skill-group > h3 {
+  margin: 0 0 1.3rem;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.skill-group > h3 em {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: .66rem;
+  letter-spacing: .1em;
+  color: var(--brand);
+  border: 1px solid var(--border);
+  padding: .1rem .45rem;
+  border-radius: 6px;
+}
+
+.skill { margin-bottom: 1.05rem; }
+.skill:last-child { margin-bottom: 0; }
+.skill-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: .8rem;
+  font-size: .87rem;
+  margin-bottom: .38rem;
+}
+.skill-top span { color: var(--text-dim); }
+.skill-top b {
+  font-family: var(--font-mono);
+  font-size: .76rem;
+  font-weight: 600;
+  color: var(--text-faint);
+  flex: none;
+}
+.bar {
+  height: 7px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.bar > i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 99px;
+  background: var(--accent-grad);
+  transition: width 1.2s var(--ease);
+}
+/* 父级 .reveal 进入视口后，各进度条按自己的 --w 展开 */
+.reveal.in .bar > i { width: var(--w, 60%); }
+
+/* "正在学习"那组用虚线边框区分，进度条换配色 */
+.skill-group.learning { border-style: dashed; }
+.skill-group.learning .bar > i { background: linear-gradient(120deg, #4ade9b, #7aa2ff); }
+
+/* ==========================================================================
+   9. 心理学小知识：原生 <details> 手风琴
+   ========================================================================== */
+.faq-list { display: grid; gap: .65rem; }
+
+.faq {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  overflow: hidden;
+  transition: border-color .3s var(--ease), background .3s var(--ease);
+}
+.faq[open] { border-color: color-mix(in srgb, var(--brand) 42%, var(--border)); }
+.faq:hover { background: var(--card-hover); }
+
+.faq summary {
+  cursor: pointer;
+  padding: .95rem 1.2rem;
+  font-size: .96rem;
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.faq summary::-webkit-details-marker { display: none; }
+/* 用 "+" 做图标，展开时旋转 45° 变 "×" */
+.faq summary::after {
+  content: "+";
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  color: var(--brand);
+  transition: transform .3s var(--ease);
+  flex: none;
+}
+.faq[open] summary::after { transform: rotate(45deg); }
+
+.faq .faq-body {
+  padding: .9rem 1.2rem 1.1rem;
+  color: var(--text-dim);
+  font-size: .92rem;
+  border-top: 1px solid var(--border);
+}
+.faq .faq-body p:last-child { margin-bottom: 0; }
+
+/* ==========================================================================
+   10. 引用块
+   ========================================================================== */
+.quote {
+  position: relative;
+  margin: 0;
+  padding: 2rem 2rem 2rem 3.2rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--brand) 10%, transparent), transparent 60%),
+    var(--card);
+  font-family: var(--font-serif);
+  font-size: clamp(1.02rem, 2.2vw, 1.2rem);
+  line-height: 1.9;
+}
+/* 超大引号：伪元素 + Unicode 左双引号 */
+.quote::before {
+  content: "\201C";
+  position: absolute;
+  left: .8rem; top: .2rem;
+  font-size: 4.2rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--brand) 55%, transparent);
+}
+.quote cite {
+  display: block;
+  margin-top: .9rem;
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: .8rem;
+  letter-spacing: .06em;
+  color: var(--text-faint);
+}
+
+/* ==========================================================================
+   11. 经历时间轴
+   ========================================================================== */
+.timeline { position: relative; margin: 0; padding: 0 0 0 1.7rem; list-style: none; }
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 5px; top: .6rem; bottom: .6rem;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--brand), var(--brand-2), transparent);
+}
+.timeline li { position: relative; padding-bottom: 1.75rem; }
+.timeline li:last-child { padding-bottom: 0; }
+.timeline li::before {
+  content: "";
+  position: absolute;
+  left: -1.7rem; top: .62rem;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--brand);
+  transition: all .3s var(--ease);
+}
+.timeline li:hover::before {
+  background: var(--brand);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--brand) 22%, transparent);
+}
+.timeline b { display: block; font-size: .97rem; }
+.timeline em {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  letter-spacing: .05em;
+  color: var(--brand);
+}
+.timeline p { margin: .28rem 0 0; font-size: .89rem; color: var(--text-dim); }
+
+/* ==========================================================================
+   12. 页脚
+   ========================================================================== */
+footer {
+  border-top: 1px solid var(--border);
+  margin-top: 2.6rem;
+  padding: 2.2rem 0 3rem;
+  color: var(--text-faint);
+  font-size: .85rem;
+}
+.foot { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center; }
+.foot a { transition: color .25s var(--ease); }
+.foot a:hover { color: var(--brand); }
+
+/* ==========================================================================
+   13. 滚动进场动画
+   ========================================================================== */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity .7s var(--ease), transform .7s var(--ease);
+}
+.reveal.in { opacity: 1; transform: none; }
+
+/* 无障碍：用户要求减少动效时全部关闭 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: .01ms !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+  .reveal.in .bar > i { width: var(--w, 60%); }
+}
+
+/* ==========================================================================
+   14. 响应式
+   ========================================================================== */
+@media (max-width: 920px) {
+  .hero-inner  { grid-template-columns: 1fr; }
+  .avatar-card { max-width: 260px; margin-inline: auto; }
+  .about-grid  { grid-template-columns: 1fr; }
+  .stats       { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  body { font-size: 15px; }
+  .nav-links { display: none; }        /* 小屏简化导航 */
+  .stats     { grid-template-columns: 1fr; }
+  .courses   { grid-template-columns: 1fr; }
+  .quote     { padding: 1.6rem 1.2rem 1.6rem 2.4rem; }
+  .quote::before { font-size: 3rem; left: .5rem; }
+}
+
+/* 打印：去掉装饰，只留正文 */
+@media print {
+  body::before, body::after, header, .avatar-card, .actions, .stats, .dir-icon { display: none !important; }
+  body { background: #fff; color: #000; }
+  .card, .dir, .skill-group, .faq, .quote { border-color: #ddd; background: #fff; }
+  .faq .faq-body { display: block; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ============================ 导航 ============================ -->
+<header id="top">
+  <div class="wrap nav">
+    <a class="logo" href="#top">
+      <span class="logo-mark">Ψ</span>
+      <span class="logo-name">
+        xyh's blog
+        <small>NBU · APPLIED PSYCHOLOGY</small>
+      </span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#about">关于我</a></li>
+      <li><a href="#research">研究方向</a></li>
+      <li><a href="#skills">方法与技能</a></li>
+      <li><a href="#exp">经历</a></li>
+    </ul>
+
+    <button class="icon-btn" id="themeBtn" title="切换深浅主题" aria-label="切换深浅主题">🌙</button>
+  </div>
+</header>
+
+<!-- ============================ Hero ============================ -->
+<div class="wrap hero">
+  <div class="hero-inner">
+    <div>
+      <span class="tagline"><i class="dot"></i>宁波大学 · 应用心理学 · 大三在读</span>
+      <h1>用实验与数据，<br>理解<span class="grad">心智与行为</span>。</h1>
+      <p class="lede">
+        我是宁波大学应用心理学专业的大三学生。这里记录我的课程笔记、文献精读与数据分析练习——
+        关注人如何知觉他人、建立信任、做出判断，并用 MATLAB、R、SPSS 把这些问题变成可以检验的模型。
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="#research">我感兴趣的方向 →</a>
+        <a class="btn btn-ghost" href="#skills">看看我的技能</a>
+      </div>
+    </div>
+
+    <div class="avatar-card">
+      <div class="avatar-inner">
+        <div class="avatar-psi">Ψ</div>
+        <span>APPLIED PSYCHOLOGY</span>
+        <span>NINGBO UNIVERSITY</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 数据条 -->
+  <div class="stats reveal">
+    <div class="stat"><b>大三</b><span>应用心理学在读</span></div>
+    <div class="stat"><b>3</b><span>统计软件:MATLAB / R / SPSS</span></div>
+    <div class="stat"><b>10+</b><span>已修专业课程</span></div>
+    <div class="stat"><b>N=96</b><span>参与的实验被试量</span></div>
+  </div>
+</div>
+
+<!-- ============================ 关于我 ============================ -->
+<section id="about" class="wrap reveal">
+  <div class="sec-head">
+    <h2>关于我</h2>
+    <p>专业背景 · 研究兴趣 · 未来规划</p>
+  </div>
+
+  <div class="about-grid">
+    <article class="card">
+      <h3>我的专业背景</h3>
+      <p>
+        我就读于<strong>宁波大学应用心理学专业</strong>，目前大三。
+        应用心理学的训练让我同时关注"理论如何解释行为"与"方法如何检验理论",
+        所以我花了不少时间在实验设计与数据分析上。
+      </p>
+
+      <h3 style="margin-top:1.5rem">我的研究兴趣</h3>
+      <p>
+        我目前最感兴趣的是<strong>社会认知与判断决策</strong>:
+        人如何在有限信息下推断他人的意图与可信度，
+        以及情绪、社会规范在其中扮演什么角色。
+        我也对社会心理学的经典效应在当代样本中是否依然成立很感兴趣。
+      </p>
+
+      <h3 style="margin-top:1.5rem">我的未来规划</h3>
+      <p>
+        短期目标是把心理统计与实验方法学扎实，能独立完成"提出问题—设计实验—编程实施—建模分析—写成报告"的完整流程；
+        长期希望能继续深造，用心理学的知识帮助人们更好地理解自己与他人，促进合作、减少群体之间的冲突。
+      </p>
+
+      <h3 style="margin-top:1.5rem">我相信的研究方式</h3>
+      <p>
+        清晰的理论假设 + 严谨的实验设计 + 可复现的数据分析。
+        分析脚本尽量写全、写清楚，让结果可以被自己半年后重新跑出来。
+      </p>
+
+      <div class="chips">
+        <span class="chip">应用心理学</span>
+        <span class="chip">社会认知</span>
+        <span class="chip">判断与决策</span>
+        <span class="chip">心理测量</span>
+        <span class="chip">实验设计</span>
+        <span class="chip">数据分析</span>
+      </div>
+    </article>
+
+    <aside class="card">
+      <h3>主修课程</h3>
+      <div class="courses">
+        <span>普通心理学</span>
+        <span>实验心理学</span>
+        <span>心理统计学</span>
+        <span>心理测量学</span>
+        <span>发展心理学</span>
+        <span>社会心理学</span>
+        <span>认知心理学</span>
+        <span>人格心理学</span>
+        <span>变态心理学</span>
+        <span>心理咨询理论</span>
+        <span>SPSS 应用</span>
+        <span>心理学研究方法</span>
+      </div>
+
+      <h3 style="margin-top:1.7rem">常用工具</h3>
+      <div class="chips">
+        <span class="chip">MATLAB</span>
+        <span class="chip">R</span>
+        <span class="chip">SPSS</span>
+        <span class="chip">Psychtoolbox</span>
+        <span class="chip">Excel</span>
+        <span class="chip">问卷星</span>
+      </div>
+
+    </aside>
+  </div>
+</section>
+
+<!-- ============================ 研究方向 ============================ -->
+<section id="research" class="wrap reveal">
+  <div class="sec-head">
+    <h2>我感兴趣的方向</h2>
+    <p>四个正在追问的问题</p>
+  </div>
+
+  <div class="directions">
+    <article class="dir">
+      <div class="dir-icon">🧠</div>
+      <h3>社会认知</h3>
+      <p>人如何感知与推断他人的意图？面孔、声音与行为线索如何塑造第一印象？</p>
+    </article>
+
+    <article class="dir">
+      <div class="dir-icon">⚖️</div>
+      <h3>判断与决策</h3>
+      <p>信息不全、时间有限时，人们依靠哪些启发式做判断？它们何时有效、何时出错？</p>
+    </article>
+
+    <article class="dir">
+      <div class="dir-icon">🤝</div>
+      <h3>信任与合作</h3>
+      <p>信任是怎么建立又怎么被破坏的？社会距离与文化背景会带来哪些差异？</p>
+    </article>
+
+    <article class="dir">
+      <div class="dir-icon">📊</div>
+      <h3>心理测量与统计方法</h3>
+      <p>量表如何编制与检验信效度？中介、调节与多层模型怎样回答更贴近真实的问题？</p>
+    </article>
+  </div>
+</section>
+
+<!-- ============================ 技能 ============================ -->
+<section id="skills" class="wrap reveal">
+  <div class="sec-head">
+    <h2>方法与技能</h2>
+    <p>从提出问题，到跑出结果</p>
+  </div>
+
+  <div class="skills-grid">
+    <!-- SPSS -->
+    <div class="skill-group">
+      <h3>SPSS <em>统计分析</em></h3>
+
+      <div class="skill">
+        <div class="skill-top"><span>数据整理与描述统计</span><b>90%</b></div>
+        <div class="bar"><i style="--w:90%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>t 检验 / 方差分析</span><b>88%</b></div>
+        <div class="bar"><i style="--w:88%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>回归与中介、调节分析</span><b>80%</b></div>
+        <div class="bar"><i style="--w:80%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>信度分析与探索性因子分析</span><b>76%</b></div>
+        <div class="bar"><i style="--w:76%"></i></div>
+      </div>
+    </div>
+
+    <!-- R -->
+    <div class="skill-group">
+      <h3>R <em>数据科学</em></h3>
+
+      <div class="skill">
+        <div class="skill-top"><span>数据清洗(dplyr / tidyr)</span><b>82%</b></div>
+        <div class="bar"><i style="--w:82%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>可视化(ggplot2)</span><b>80%</b></div>
+        <div class="bar"><i style="--w:80%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>线性模型与重复测量分析</span><b>72%</b></div>
+        <div class="bar"><i style="--w:72%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>R Markdown 可复现报告</span><b>68%</b></div>
+        <div class="bar"><i style="--w:68%"></i></div>
+      </div>
+    </div>
+
+    <!-- MATLAB -->
+    <div class="skill-group">
+      <h3>MATLAB <em>编程与建模</em></h3>
+
+      <div class="skill">
+        <div class="skill-top"><span>矩阵运算与数据处理</span><b>85%</b></div>
+        <div class="bar"><i style="--w:85%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>数据可视化与统计绘图</span><b>78%</b></div>
+        <div class="bar"><i style="--w:78%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>Psychtoolbox 实验程序编写</span><b>72%</b></div>
+        <div class="bar"><i style="--w:72%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>心理物理与计算建模入门</span><b>65%</b></div>
+        <div class="bar"><i style="--w:65%"></i></div>
+      </div>
+    </div>
+
+    <!-- 研究方法 -->
+    <div class="skill-group">
+      <h3>研究方法 <em>METHOD</em></h3>
+
+      <div class="skill">
+        <div class="skill-top"><span>实验设计与变量控制</span><b>85%</b></div>
+        <div class="bar"><i style="--w:85%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>问卷编制与心理测量</span><b>80%</b></div>
+        <div class="bar"><i style="--w:80%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>文献检索与综述写作</span><b>78%</b></div>
+        <div class="bar"><i style="--w:78%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>APA 格式学术写作</span><b>74%</b></div>
+        <div class="bar"><i style="--w:74%"></i></div>
+      </div>
+    </div>
+
+    <!-- 正在学习 -->
+    <div class="skill-group learning">
+      <h3>正在学习 <em>LEARNING</em></h3>
+
+      <div class="skill">
+        <div class="skill-top"><span>Python(pandas / matplotlib)</span><b>50%</b></div>
+        <div class="bar"><i style="--w:50%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>PsychoPy 在线实验</span><b>45%</b></div>
+        <div class="bar"><i style="--w:45%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>结构方程模型(lavaan)</span><b>42%</b></div>
+        <div class="bar"><i style="--w:42%"></i></div>
+      </div>
+
+      <div class="skill">
+        <div class="skill-top"><span>EEG / ERP 数据预处理</span><b>35%</b></div>
+        <div class="bar"><i style="--w:35%"></i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 心理学小知识 ============================ -->
+<section id="faq" class="wrap reveal">
+  <div class="sec-head">
+    <h2>心理学小知识</h2>
+    <p>点击展开 · 那些常被问起的概念</p>
+  </div>
+
+  <div class="faq-list">
+    <details class="faq" open>
+      <summary>心理学就是"猜别人在想什么"吗？</summary>
+      <div class="faq-body">
+        <p>
+          不是。心理学是用科学方法研究<strong>心智与行为</strong>的学科，
+          关心的是可观察、可测量、可重复验证的规律：
+          从毫秒级的知觉加工，到长时程的情绪与人格发展。
+          真正的工具不是"读心"，而是实验设计、测量与统计推断。
+        </p>
+      </div>
+    </details>
+
+    <details class="faq">
+      <summary>为什么心理学专业的同学要学这么多统计？</summary>
+      <div class="faq-body">
+        <p>
+          因为心理学研究的对象是人，而人的行为变异很大：
+          同一个人不同时候不一样，不同的人之间差异更大。
+          统计正是用来判断"我看到的差异，究竟是真实的效应，还是随机波动"。
+          描述统计、假设检验、方差分析、回归、中介与调节，构成了最基本的分析工具箱。
+        </p>
+      </div>
+    </details>
+
+    <details class="faq">
+      <summary>p &lt; .05 到底意味着什么？</summary>
+      <div class="faq-body">
+        <p>
+          它表示：<em>如果原假设为真</em>，观测到当前或更极端数据的概率小于 5%。
+          它<strong>不是</strong>"原假设为假的概率"，也<strong>不是</strong>"效应很大"。
+          因此现在更推荐同时报告效应量、置信区间，必要时用贝叶斯因子补充证据强度。
+        </p>
+      </div>
+    </details>
+
+    <details class="faq">
+      <summary>相关不等于因果，那心理学怎么做因果推断？</summary>
+      <div class="faq-body">
+        <p>
+          三条常用路径：一是<strong>随机对照实验</strong>（随机分配是因果推断的金标准）；
+          二是<strong>纵向追踪</strong>配合交叉滞后模型；
+          三是<strong>自然实验与工具变量</strong>等准实验设计。
+          观察到的相关只能提示假设，不能直接当作结论。
+        </p>
+      </div>
+    </details>
+
+    <details class="faq">
+      <summary>样本量为什么这么重要？</summary>
+      <div class="faq-body">
+        <p>
+          心理学效应通常不大（相关系数 r ≈ .2 左右很常见），
+          小样本会同时带来两个问题：检验力不足（真实效应测不出来）与
+          效应量虚高（一旦显著就明显偏大）。
+          事前做检验力分析(如 G*Power),或用贝叶斯设计,是更稳妥的做法。
+        </p>
+      </div>
+    </details>
+
+    <details class="faq">
+      <summary>SPSS、R、MATLAB 该用哪个？</summary>
+      <div class="faq-body">
+        <p>
+          看任务：<strong>SPSS</strong> 上手快、菜单化，适合课程作业中常规的 t 检验、方差分析与问卷信效度；
+          <strong>R</strong> 更灵活、可写脚本、出的图更漂亮，复杂模型（多层模型、结构方程）与可复现分析更推荐它；
+          <strong>MATLAB</strong> 在实验程序(Psychtoolbox)、矩阵运算与计算建模上最方便。
+          我现在是"课程作业用 SPSS,正式分析尽量转 R,实验程序用 MATLAB"。
+        </p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- ============================ 引用 ============================ -->
+<section class="wrap reveal">
+  <blockquote class="quote">
+    心理学是研究心智与行为的科学。它的目标不是让人"看透别人",
+    而是让我们对自己的所见、所想与所做，多一分理解与宽容。
+    <cite>—— 一点个人体会</cite>
+  </blockquote>
+</section>
+
+<!-- ============================ 经历 ============================ -->
+<section id="exp" class="wrap reveal">
+  <div class="sec-head">
+    <h2>学习与经历</h2>
+    <p>一条还在延伸的时间轴</p>
+  </div>
+
+  <ul class="timeline">
+    <li>
+      <em>大三 · 现在</em>
+      <b>方法课与科研训练</b>
+      <p>系统学习心理统计与实验设计，用 MATLAB、R、SPSS 完成课程作业与小型研究的数据分析。</p>
+    </li>
+
+    <li>
+      <em>大三上</em>
+      <b>文献精读与报告写作</b>
+      <p>参与小组文献汇报，练习把一篇英文实证论文的假设、方法、结果讲清楚。</p>
+    </li>
+
+    <li>
+      <em>大二下</em>
+      <b>心理测量课程实践</b>
+      <p>参与问卷编制与施测，完成信度分析与探索性因子分析的课程报告。</p>
+    </li>
+
+    <li>
+      <em>大二上</em>
+      <b>实验心理学课程实验</b>
+      <p>完成反应时、注意与记忆等经典实验，学习用 SPSS 做方差分析并撰写实验报告。</p>
+    </li>
+
+    <li>
+      <em>大一</em>
+      <b>进入应用心理学专业</b>
+      <p>从普通心理学、发展心理学、社会心理学开始，建立对心理学的整体认识。</p>
+    </li>
+  </ul>
+</section>
+
+<!-- ============================ 页脚 ============================ -->
+<footer id="contact">
+  <div class="wrap foot">
+    <div>© xyh · 宁波大学 · 应用心理学</div>
+    <div>
+      <a href="#top">回到顶部</a> ·
+      <a href="https://www.nbu.edu.cn" target="_blank" rel="noopener">宁波大学</a> ·
+      <a href="https://github.com" target="_blank" rel="noopener">GitHub</a> ·
+      <a href="mailto:psych@example.com">Email</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ==========================================================================
+   1) 深浅主题：读取 localStorage，无记录时跟随系统偏好
+   ========================================================================== */
+(function () {
+  const root  = document.documentElement;
+  const btn   = document.getElementById('themeBtn');
+  const saved = localStorage.getItem('theme');
+  const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+
+  setTheme(saved || (prefersLight ? 'light' : 'dark'));
+
+  function setTheme(t) {
+    root.dataset.theme = t;
+    btn.textContent = t === 'dark' ? '🌙' : '☀️';
+    localStorage.setItem('theme', t);
+  }
+
+  btn.addEventListener('click', function () {
+    setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
+  });
+})();
+
+/* ==========================================================================
+   2) 滚动超过 8px 时给导航加分隔线
+   ========================================================================== */
+(function () {
+  const header = document.querySelector('header');
+  function onScroll() { header.classList.toggle('stuck', window.scrollY > 8); }
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+})();
+
+/* ==========================================================================
+   3) 元素进入视口时淡入上移（同时触发技能条生长）
+   ========================================================================== */
+(function () {
+  const items = document.querySelectorAll('.reveal');
+
+  // 兜底：不支持 IntersectionObserver 的浏览器直接全部显示
+  if (!('IntersectionObserver' in window)) {
+    items.forEach(function (el) { el.classList.add('in'); });
+    return;
+  }
+
+  const io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry, i) {
+      if (!entry.isIntersecting) return;
+      // 同一批元素依次延迟，形成瀑布式出现（最多延迟 400ms）
+      setTimeout(function () { entry.target.classList.add('in'); }, Math.min(i * 90, 400));
+      io.unobserve(entry.target);
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -60px' });
+
+  items.forEach(function (el) { io.observe(el); });
+})();
+
+/* ==========================================================================
+   4) 锚点平滑滚动（补偿 sticky 导航高度）
+   ========================================================================== */
+(function () {
+  document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+    a.addEventListener('click', function (ev) {
+      const id = a.getAttribute('href');
+      if (id === '#' || id.length < 2) return;
+      const target = document.querySelector(id);
+      if (!target) return;
+      ev.preventDefault();
+      const top = target.getBoundingClientRect().top + window.scrollY - 78;
+      window.scrollTo({ top: top, behavior: 'smooth' });
+    });
+  });
+})();
+</script>
+</body>
+</html>
